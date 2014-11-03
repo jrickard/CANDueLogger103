@@ -213,13 +213,13 @@ void handleShortCmd()
                     myVars.logger=false;
                     logToFile("============== END OF LOG SESSION ==============\n");
                     closeFile();
-                    Serial<<"Setting data logger to OFF....\n";
+                    Serial<<"Setting data logger to OFF.."<<myVars.logfile<<"..\n";
                    }
                   else
                     { 
                     openFile();
                     logToFile("============== NEW LOG FILE BEGINS ==============\n");
-                    Serial<<"Setting data logger to ON....\n";
+                    Serial<<"Setting data logger to ON.."<<myVars.logfile<<"..\n";
                     myVars.logger=true;                    
                      }
 		break;
@@ -229,15 +229,15 @@ void handleShortCmd()
                     myVars.logger=false;
                     logToFile("============== END OF LOG SESSION ==============\n");
                     closeFile();
-                    Serial<<"Setting data logger to OFF....\n"  ;                                      
+                    Serial<<"Setting data logger to OFF.."<<myVars.logfile<<"..\n"  ;                                      
                   }
                   else
                     { 
                      
                     openFile();
-                    logToFile("============== NEW LOG FILE BEGINS ==============\n");  
+                    logToFile("============== NEW LOG FILE BEGINS ==============\n"); 
                     myVars.logger=true; 
-                     Serial<<"Setting data logger to ON....\n";  
+                     Serial<<"Setting data logger to ON.."<<myVars.logfile<<"..\n";  
                     }
                       
 		break;
