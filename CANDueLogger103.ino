@@ -14,7 +14,8 @@ class EEPROMvariables {
 	char logfile[80];
         uint16_t transmitime;
         boolean logger;
-        
+        uint32_t datarate;
+        uint8_t goodEEPROM;
         CAN_FRAME outFrame;
 };
 
@@ -40,8 +41,8 @@ void setup() {
    
     EEPROM.setWPPin(19); 
     EEPROM.read(page, myVars);
-    if(myVars.logfile[0]<47 || myVars.logfile[0]>122)defaults();
-     myVars.logger=false; 
+    if (myVars.goodEEPROM!=200)defaults();
+    myVars.logger=false; 
     lastime=startime=timestamp=millis();  //Zero our timers
     if(myVars.CANdo==0) initializeCAN(0); //If CANdo is 0, initialize CAN0 
     if(myVars.CANdo==1) initializeCAN(1);    //If CANdo is 1, initialize CAN1 
@@ -135,7 +136,7 @@ void handleConfigCmd() {
 
 	// strtol() is able to parse also hex values (e.g. a string "0xCAFE"), useful for enable/disable by device id
 	newValue = strtol((char *) (cmdBuffer + i), NULL, 0);
-	//cmdString.toUpperCase();
+	cmdString.toUpperCase();
 
 	 
        if (cmdString == String("FILE")) {
@@ -182,6 +183,12 @@ void handleConfigCmd() {
 	} else if (cmdString == String("RATE") ) {
 		Serial<<"Setting CAN to send frame every: "<< newValue<<" msec\n\n";
 		myVars.transmitime = newValue-1;
+        } else if (cmdString == String("KBPS") ) {
+		Serial<<"Setting CAN data rate to: "<< newValue<<" kbps\n\n";
+		myVars.datarate = newValue*1000;
+                initializeCAN(myVars.CANdo); //If CANdo is 0, initialize CAN0 
+                 
+    
 	} else if (cmdString == String("LOGLEVEL")) {
 		switch (newValue) {
 		case 0:
@@ -245,9 +252,11 @@ void handleShortCmd()
 		break;
         case 'D':
       		debug=(!debug);
+                Serial<<"Debug= "<<debug<<"\n";
       		break;
 	case 'd':
       		debug=(!debug);
+                Serial<<"Debug= "<<debug<<"\n";
       		break;
 	
       	case 'c':
@@ -315,21 +324,21 @@ void initializeCAN(int which)
   if(which)  //If 1, initialize Can1.  If 0, initialize Can0.
     {
       pinMode(48,OUTPUT);
-      if (Can1.begin(CAN_BPS_250K,48)) 
+      if (Can1.begin(myVars.datarate,48)) 
         {
            Can1.watchFor();
             Can1.attachCANInterrupt(handleFrame);
-           Serial<<"\n\nUsing CAN1 - initialization completed.\n";
+           Serial<<"\n\nUsing CAN1 - initialization completed at "<<myVars.datarate<<" \n";
         }
         else Serial.println("\nCAN1 initialization (sync) ERROR\n");
     } 
   else
     {pinMode(50,OUTPUT);
-     if (Can0.begin(CAN_BPS_250K,50)) 
+     if (Can0.begin(myVars.datarate,50)) 
         {
             Can0.watchFor();
             Can0.attachCANInterrupt(handleFrame);
-            Serial.println("\n\nUsing CAN0 - initialization completed.\n");      
+            Serial<<"\n\nUsing CAN0 - initialization completed at "<<myVars.datarate<<" \n";      
          }
         else Serial.println("\nCAN0 initialization (sync) ERROR\n");
     }
@@ -411,33 +420,22 @@ void printMenu()
   Serial<<"\f\n=========== CANDue Logger Program Version "<<Version<<" ==============\n************ List of Available Commands ************\n\n";
   Serial<<"  C1  - CAN bus selector\n         C0=CAN0\n         C1=CAN1\n         C2=CAN0 and CAN1\n";
   Serial<<"  L - toggles CAN data logging between ON and OFF\n";
-   Serial<<"  D - toggles Debug off an on to print recieved and sent CAN data traffic\n";
-   Serial<<"  FILE=logfile.csv    sets the microSD file name to log to\n";
+  Serial<<"  D - toggles DISPLAY FRAMES off/on to print recieved and sent CAN data traffic\n";
+  Serial<<"  FILE=logfile.csv    sets the microSD file name to log to\n";
   Serial<<"  SEND=050 FF 10 01 CA 02 BB 01 77         send standard ID CAN frame - hexadecimal format\n";
   Serial<<"  SENDL=18FF30CC FF 10 01 CA 02 BB 01 77   send extended ID CAN frame - hexadecimal format\n";
   Serial<<"  RATE=500   The frequency in milliseconds to send stored CAN message \n";
+  Serial<<"  KBPS=250   Change CAN bus data rate in kbps \n";
   Serial<<"  MARK=Turned on Air Conditioner Here    - Copies string to log file as a marker\n";
   Serial<<"  P - prints current logfile to screen\n";
   Serial<<"  I - displays microSD card operating paramters\n";
-  Serial<<"MOSI:"<<MOSI<<" MISO:"<<MISO<<" SCK:"<<SCK<<"  SS:"<<SS<<"\n\n";  
+  Serial<<"  MOSI:"<<MOSI<<" MISO:"<<MISO<<" SCK:"<<SCK<<"  SS:"<<SS<<"\n\n";  
   Serial<<"**************************************************************\n==============================================================\n\n";
   
   
   
 }
 
-void defaults()
-{
-   
-  sprintf(myVars.logfile,"default.txt");
-  Serial<<"Setting default logfile: "<<myVars.logfile<<"\n";
-  myVars.CANdo=0; 
-  myVars.transmitime=500;  
-  myVars.logger=false;
-  myVars.outFrame.length = 8;  // Data payload 8 bytes
-  myVars.outFrame.rtr = 0;  // Data payload 8 bytes
-
-}
 
 void sendCAN(int which)
 
@@ -547,5 +545,21 @@ void makeDir()
 
   else Serial.print("File directory already exists... \n");
 }
+
+void defaults()
+{
+   
+  sprintf(myVars.logfile,"default.txt");
+  Serial<<"Setting default logfile: "<<myVars.logfile<<"\n";
+  myVars.CANdo=0; 
+  myVars.transmitime=500;  
+  myVars.logger=false;
+  myVars.outFrame.length = 8;  // Data payload 8 bytes
+  myVars.outFrame.rtr = 0;  // Data payload 8 bytes
+  myVars.goodEEPROM=200;
+  myVars.datarate=250000;
+
+}
+
             
 
