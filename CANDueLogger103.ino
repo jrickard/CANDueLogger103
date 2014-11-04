@@ -25,7 +25,7 @@ uint16_t dummy;
 char cmdBuffer[100];
 char logstring[200];
 char msgBuff[100];
-float Version=1.04;
+float Version=1.05;
 int ptrBuffer;
 short logcycle=0;
 unsigned long elapsedtime, timestamp,startime, lastime;  //Variables to compare millis for timers
