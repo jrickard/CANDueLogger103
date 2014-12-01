@@ -31,7 +31,8 @@ short logcycle=0;
 unsigned long elapsedtime, timestamp,startime, lastime;  //Variables to compare millis for timers
 boolean handlingEvent, debug;
 File myFile;
-
+char sendfilebuff[50][40]{};
+uint8_t nextsendframe=0;
 
 
 void setup() {
@@ -54,8 +55,9 @@ void setup() {
     initializeMicroSD();
     Serial<<"\n\n Startup successful. EVTV Motor Werks -  CANDue Logger Version: "<<Version<<"\n\n";
     printMenu();
-    
+     if(readSENDfile())getNextSENDFrame(nextsendframe++);
     Serial<<"Current logfile: "<< myVars.logfile<<"\n\n";
+   
 }
 
 
@@ -74,7 +76,16 @@ void loop() {
               {  
                 EEPROM.write(page, myVars);
                 logcycle=0;
-               // Serial<<"\n";
+                if(sendfilebuff[nextsendframe][0]>0)
+                  {
+                    getNextSENDFrame(nextsendframe++);
+                  }
+                else
+                  {
+                  nextsendframe=0;
+                  getNextSENDFrame(nextsendframe++); 
+                  }
+               
               } 
           }          
 }
@@ -561,5 +572,43 @@ void defaults()
 
 }
 
-            
+bool readSENDfile()
+{
+   myFile=SD.open("SEND.txt");
+      if (myFile)
+      {
+       Serial<<"SEND file detected and open...\n";    
+       int i=0;
+       int j=0;
+       while (myFile.available()) 
+          {
+            sendfilebuff[i][j++]=myFile.read();
+            Serial<<sendfilebuff[i][j-1];
+            if(sendfilebuff[i][j-1]==10)
+              {
+                i++;
+                j=0;
+              }
+    	  }
+        myFile.close();
+        return true;
+       }
+   else 
+   {
+     Serial<<"No SEND file detected...\n";
+      return false;
+   }
+
+}
+
+void getNextSENDFrame(int next)
+{
+ sscanf(sendfilebuff[next],"%03X %02X %02X %02X %02X %02X %02X %02X %02X", &myVars.outFrame.id, 
+                 &myVars.outFrame.data.bytes[0], &myVars.outFrame.data.bytes[1], 
+          &myVars.outFrame.data.bytes[2], &myVars.outFrame.data.bytes[3], &myVars.outFrame.data.bytes[4], 
+          &myVars.outFrame.data.bytes[5], &myVars.outFrame.data.bytes[6], &myVars.outFrame.data.bytes[7]);
+          Serial<<myVars.outFrame.id<<"  "<<myVars.outFrame.data.bytes[0]<<"\n";
+          myVars.outFrame.extended=0;  
+}
+
 
