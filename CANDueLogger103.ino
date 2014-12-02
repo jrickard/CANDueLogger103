@@ -25,7 +25,7 @@ uint16_t dummy;
 char cmdBuffer[100];
 char logstring[200];
 char msgBuff[100];
-float Version=1.05;
+float Version=1.07;
 int ptrBuffer;
 short logcycle=0;
 unsigned long elapsedtime, timestamp,startime, lastime;  //Variables to compare millis for timers
@@ -62,17 +62,13 @@ void setup() {
 
 
 
-void loop() {
- 
-  
-  
-  
+void loop() 
+{
     if(millis()-lastime > myVars.transmitime)  //If we reach our transmitime, send a frame and print status
           {
-            //Serial<<"* ";
             lastime=millis();
             if(myVars.outFrame.id>0)sendCAN(myVars.CANdo);
-             if(logcycle++ > 20) 
+            if(logcycle++ > 20) 
               {  
                 EEPROM.write(page, myVars);
                 logcycle=0;
@@ -80,12 +76,7 @@ void loop() {
                   {
                     getNextSENDFrame(nextsendframe++);
                   }
-                else
-                  {
-                  nextsendframe=0;
-                  getNextSENDFrame(nextsendframe++); 
-                  }
-               
+                else{nextsendframe=0;}
               } 
           }          
 }
@@ -413,6 +404,7 @@ void logToFile(char *logstring)
 void handleFrame(CAN_FRAME *frame)
 
 {
+ 
    int milliseconds = (int) (millis()/1) %1000 ;
     int seconds = (int) (millis() / 1000) % 60 ;
     int minutes = (int) ((millis() / (1000*60)) % 60);
@@ -607,7 +599,7 @@ void getNextSENDFrame(int next)
                  &myVars.outFrame.data.bytes[0], &myVars.outFrame.data.bytes[1], 
           &myVars.outFrame.data.bytes[2], &myVars.outFrame.data.bytes[3], &myVars.outFrame.data.bytes[4], 
           &myVars.outFrame.data.bytes[5], &myVars.outFrame.data.bytes[6], &myVars.outFrame.data.bytes[7]);
-          Serial<<myVars.outFrame.id<<"  "<<myVars.outFrame.data.bytes[0]<<"\n";
+          //Serial<<myVars.outFrame.id<<"  "<<myVars.outFrame.data.bytes[0]<<"\n";
           myVars.outFrame.extended=0;  
 }
 
